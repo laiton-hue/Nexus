@@ -198,12 +198,26 @@ async function askCustom(ms,sys,p){
  if(!c)throw new Error('A IA respondeu vazio.');return c}
 const ALT={claude:['claude-sonnet-4-5','claude-haiku-4-5'],gemini:['gemini-1.5-flash','gemini-2.0-flash'],openai:['gpt-4.1-mini','gpt-4o'],grok:['grok-3','grok-3-mini'],mistral:['mistral-small-latest'],groq:['llama-3.1-8b-instant']};
 const callP=(p,m,s,k,x)=>p.id==='claude'?askClaude(m,s,k,x):p.id==='gemini'?askGemini(m,s,k,x):askCustom(m,s,{url:p.u,key:k,model:x});
+
 const mk=(p,k,mo)=>({name:p.name,ask:async(m,s)=>{
- k=cleanKey(k);const list=[...new Set([mo,p.m,...(ALT[p.id]||[])].filter(Boolean))];let last;
+ k=cleanKey(k);
+ const list=[...new Set([mo, p.m, 'gemini-1.5-flash', 'gemini-1.5-pro', ...(ALT[p.id]||[])].filter(Boolean))];
+ let last;
  for(const x of list){
-  try{const r=await callP(p,m,s,k,x);if(x!==cfg.m[p.id]&&cfg.k[p.id]===k){cfg.m[p.id]=x;persist()}return r}
-  catch(e){last=e;if(!(/\(404\)/.test(e.message)||(/\(400\)/.test(e.message)&&/model|modelo/i.test(e.message))))throw e}}
- throw last}});
+  try{
+   const r=await callP(p,m,s,k,x);
+   if(x!==cfg.m[p.id]&&cfg.k[p.id]===k){cfg.m[p.id]=x;persist()}
+   return r;
+  }
+  catch(e){
+   last=e;
+   const isRetryable = /\(404\)/.test(e.message) || /\(503\)/.test(e.message) || (/\(400\)/.test(e.message) && /model|modelo/i.test(e.message));
+   if(!isRetryable) throw e;
+  }
+ }
+ throw last;
+}});
+
 cfg.k=cfg.k||{};cfg.m=cfg.m||{};Object.keys(cfg.k).forEach(x=>{cfg.k[x]=cleanKey(cfg.k[x]);if(!cfg.k[x])delete cfg.k[x]});
 const providers=()=>PROVS.filter(p=>cfg.k[p.id]).map(p=>mk(p,cfg.k[p.id],cfg.m[p.id]||p.m));
 
@@ -233,7 +247,7 @@ function bubble(m){
   d.innerHTML=`<div class="tag">Nexus LP · ${esc(lab(m.mode))}</div><div class="txt"></div><div class="acts"><button onclick="like(this)">👍</button><button onclick="like(this)">👎</button><button onclick="regen(this)">🔄</button><button onclick="copyT(this)">📋</button><button onclick="share(this)">⋯</button>${code?'<button onclick="go(\'preview\')">▶</button>':''}<div class="sp"></div><button onclick="speak(this)">🔊</button></div><div class="disc">Nexus LP é IA e pode cometer erros.</div>`;
   d.querySelector('.txt').textContent=code?strip(m.content):m.content}
  $('msgs').appendChild(d);$('msgs').scrollTop=1e9;return d}
-const vis=()=>[...$('msgs').children].filter(x=>!x.querySelector('.err')&&!x.classList.contains('dim'));
+const vis=()=>[...$('msgs'].children].filter(x=>!x.querySelector('.err')&&!x.classList.contains('dim'));
 const idxOf=b=>vis().indexOf(b.closest('.bub'));
 function cutFrom(i){vis().slice(i).forEach(x=>x.remove());$('msgs').querySelectorAll('.err').forEach(x=>x.closest('.bub').remove());convo.messages.length=i}
 function regen(b){if(busy)return;const i=idxOf(b);if(i<1)return;cutFrom(i);save();run()}
@@ -270,7 +284,7 @@ $('file').addEventListener('change',e=>{
  const r=new FileReader();
  if(f.type.startsWith('image/')){r.onload=()=>{att={kind:'image',type:f.type,b64:r.result.split(',')[1],name:f.name};chip()};r.readAsDataURL(f)}
  else{r.onload=()=>{att={kind:'text',content:r.result,name:f.name};chip()};r.readAsText(f)}});
-function copyT(b){const t=b.closest('.bub').querySelector('.txt').textContent;navigator.clipboard&&navigator.clipboard.writeText(t);toast('Copiado.')}
+function copyT(b){const t=b.closest('.bub').querySelector('.txt'].textContent;navigator.clipboard&&navigator.clipboard.writeText(t);toast('Copiado.')}
 
 /* ---------- conversas ---------- */
 function save(){
