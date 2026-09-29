@@ -124,7 +124,7 @@ const MEM={};
 const LS={g:(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));if(v!=null)return v}catch(e){}return k in MEM?MEM[k]:d},s:(k,v)=>{MEM[k]=v;try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}};
 const cleanKey=v=>String(v||'').replace(/^[\s"'“”‘’`]+|[\s"'“”‘’`]+$/g,'').replace(/[\s\u200B-\u200D\uFEFF\u00A0]+/g,'').replace(/^(bearer|key=|api[_-]?key[:=])/i,'').replace(/^["'“”‘’`]+|["'“”‘’`]+$/g,'');
 const persist=()=>LS.s('nexuslp_cfg2',cfg);
-const CLAUDE_MODEL='claude-sonnet-4-6', GEMINI_MODEL='gemini-3.8-flash'; // troque aqui se o teste de conexão der 404
+const CLAUDE_MODEL='claude-sonnet-4-6', GEMINI_MODEL='gemini-1.5-flash';
 const KC='nexuslp_convos', KG='nexuslp_cfg';
 
 const MODES=[
@@ -143,7 +143,7 @@ const RULES={
 
 const PROVS=[
 {id:'claude',name:'Claude',ph:'sk-ant-...',m:'claude-sonnet-4-6'},
-{id:'gemini',name:'Gemini',ph:'AIza...',m:'gemini-3.8-flash'},
+{id:'gemini',name:'Gemini',ph:'AIza...',m:'gemini-1.5-flash'},
 {id:'openai',name:'ChatGPT',ph:'sk-...',m:'gpt-4o-mini',u:'https://api.openai.com/v1/chat/completions'},
 {id:'grok',name:'Grok',ph:'xai-...',m:'grok-4',u:'https://api.x.ai/v1/chat/completions'},
 {id:'deepseek',name:'DeepSeek',ph:'sk-...',m:'deepseek-chat',u:'https://api.deepseek.com/chat/completions'},
@@ -159,7 +159,7 @@ const lab=k=>(MODES.find(m=>m.k===k)||MODES[1]).l;
 
 /* ---------- utilidades de UI ---------- */
 function toast(m,ms=2500){const t=$('toast');clearTimeout(tt);t.textContent=m;t.classList.toggle('show',!!m);if(m)tt=setTimeout(()=>t.classList.remove('show'),ms)}
-function go(n){st.screen=n;document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id==='s-'+n));$('cw').style.display=(n==='home'||n==='chat')?'':'none';if(n==='preview')runPreview();if(n==='settings')renderSettings();if(n==='search'){$('q').value='';renderSearch('')}closeDrawer()}
+function go(n){st.screen=n;document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id==='s-'+n));$('cw').style.display=(n==='home'\vert{}\vert{}n==='chat')?'':'none';if(n==='preview')runPreview();if(n==='settings')renderSettings();if(n==='search'){$('q').value='';renderSearch('')}closeDrawer()}
 const home=()=>go(convo.messages.length?'chat':'home');
 const openDrawer=()=>$('dOv').classList.add('open'), closeDrawer=()=>$('dOv').classList.remove('open');
 const closeModes=()=>$('mOv').classList.remove('open');
@@ -196,7 +196,7 @@ async function askCustom(ms,sys,p){
  let c=d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content;
  if(Array.isArray(c))c=c.map(x=>x.text||x).join('\n');c=(c||'').trim();
  if(!c)throw new Error('A IA respondeu vazio.');return c}
-const ALT={claude:['claude-sonnet-4-5','claude-haiku-4-5'],gemini:['gemini-2.5-flash','gemini-2.0-flash'],openai:['gpt-4.1-mini','gpt-4o'],grok:['grok-3','grok-3-mini'],mistral:['mistral-small-latest'],groq:['llama-3.1-8b-instant']};
+const ALT={claude:['claude-sonnet-4-5','claude-haiku-4-5'],gemini:['gemini-1.5-flash','gemini-2.0-flash'],openai:['gpt-4.1-mini','gpt-4o'],grok:['grok-3','grok-3-mini'],mistral:['mistral-small-latest'],groq:['llama-3.1-8b-instant']};
 const callP=(p,m,s,k,x)=>p.id==='claude'?askClaude(m,s,k,x):p.id==='gemini'?askGemini(m,s,k,x):askCustom(m,s,{url:p.u,key:k,model:x});
 const mk=(p,k,mo)=>({name:p.name,ask:async(m,s)=>{
  k=cleanKey(k);const list=[...new Set([mo,p.m,...(ALT[p.id]||[])].filter(Boolean))];let last;
@@ -311,21 +311,22 @@ async function autofix(msg){
 function speak(b){
  const s=window.speechSynthesis;if(!s)return toast('Este aparelho não tem leitura em voz.');
  if(s.speaking||s.pending){s.cancel();b.textContent='🔊';return}
- const t=b.closest('.bub').querySelector('.txt').textContent.replace(/[`*_#>]/g,''),ch=t.match(/[^.!?\n]+[.!?]*\s*/g)||[t],v=s.getVoices().find(x=>/^pt/i.test(x.lang));
+ const t=b.closest('.bub').querySelector('.txt'].textContent.replace(/[`*_#>]/g,''),ch=t.match(/[^.!?\n]+[.!?]*\s*/g)||[t],v=s.getVoices().find(x=>/^pt/i.test(x.lang));
  b.textContent='⏸';
  ch.forEach((c,i)=>{const u=new SpeechSynthesisUtterance(c);u.lang='pt-BR';if(v)u.voice=v;u.onerror=()=>b.textContent='🔊';if(i===ch.length-1)u.onend=()=>b.textContent='🔊';s.speak(u)})}
 let rec=null,lis=false;
 function mic(){
  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
- if(!SR)return toast('Microfone de voz indisponível aqui. Use o microfone do teclado.',4000);
+ if(!SR)return toast('Microfone indisponível neste navegador.',3000);
  if(lis){rec.stop();return}
  rec=new SR();rec.lang='pt-BR';rec.interimResults=true;rec.continuous=true;
  const base=$('inp').value?$('inp').value+' ':'';
- rec.onstart=()=>{lis=true;$('mic').classList.add('lis')};
+ rec.onstart=()=>{lis=true;$('mic').classList.add('lis');toast('Ouvindo... Fale agora.')};
  rec.onresult=e=>{let t='';for(const r of e.results)t+=r[0].transcript;$('inp').value=base+t};
- rec.onerror=e=>{if(/not-allowed|service/.test(e.error))toast('Sem permissão de microfone. Libere nas configurações do Android.',4000)};
- rec.onend=()=>{lis=false;$('mic').classList.remove('lis')};
- try{rec.start()}catch(e){}}
+ rec.onerror=e=>{toast('Erro no microfone: '+e.error,3000)};
+ rec.onend=()=>{lis=false;$('mic').classList.remove('lis');toast('')};
+ try{rec.start()}catch(e){toast('Não foi possível iniciar o microfone.',3000)}
+}
 
 /* ---------- configurações ---------- */
 const res=(id,k,t)=>{const e=$(id);e.className='res '+k;e.textContent=t};
